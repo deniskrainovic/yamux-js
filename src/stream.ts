@@ -153,6 +153,26 @@ export class Stream extends Duplex {
         this.state = STREAM_STATES.Closed;
     }
 
+    // Half-close: stream.end() sends a FIN frame to the remote side,
+    // signaling that no more data will be written while still allowing reads.
+    public _final(cb: (error?: Error | null) => void): void {
+        switch (this.state) {
+            case STREAM_STATES.Init:
+            case STREAM_STATES.SYNSent:
+            case STREAM_STATES.SYNReceived:
+            case STREAM_STATES.Established:
+                this.state = STREAM_STATES.LocalClose;
+                this.sendClose();
+                break;
+            case STREAM_STATES.RemoteClose:
+                this.state = STREAM_STATES.Closed;
+                this.sendClose();
+                this.session.closeStream(this.id);
+                break;
+        }
+        cb();
+    }
+
     private processFlags(flags: FLAGS) {
         // Close the stream without holding the state lock
         let closeStream = false;
@@ -161,16 +181,18 @@ export class Stream extends Duplex {
                 this.state = STREAM_STATES.Established;
             }
         }
-        if (flags === FLAGS.SYN) {
+        if (flags === FLAGS.FIN) {
             switch (this.state) {
                 case STREAM_STATES.SYNSent:
                 case STREAM_STATES.SYNReceived:
                 case STREAM_STATES.Established:
                     this.state = STREAM_STATES.RemoteClose;
+                    this.push(null);
                     break;
                 case STREAM_STATES.LocalClose:
                     this.state = STREAM_STATES.Closed;
                     closeStream = true;
+                    this.push(null);
                     break;
                 default:
                     this.session.config.logger('[ERR] yamux: unexpected FIN flag in state %d', this.state);
@@ -182,6 +204,7 @@ export class Stream extends Duplex {
         if (flags === FLAGS.RST) {
             this.state = STREAM_STATES.Reset;
             closeStream = true;
+            this.push(null);
         }
 
         if (closeStream) {
