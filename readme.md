@@ -1,10 +1,22 @@
-# Yamux-js
+# Yamux-js (fork)
 
-[![npm version](https://badge.fury.io/js/yamux-js.svg)](https://www.npmjs.com/package/yamux-js)
-[![Build status](https://img.shields.io/github/actions/workflow/status/th-ch/yamux-js/node.js.yml?branch=master)](https://github.com/th-ch/yamux-js)
-[![GitHub license](https://img.shields.io/github/license/th-ch/yamux-js.svg)](https://github.com/th-ch/yamux-js/blob/master/LICENSE)
+> Fork of [th-ch/yamux-js](https://github.com/th-ch/yamux-js) with fixes for `hashicorp/yamux` interop.
 
-Yamux-js (Yet another Multiplexer) is a Node.js (TypeScript/JavaScript) port of the multiplexing library for Golang made by HashiCorp: https://github.com/hashicorp/yamux. The 2 libraries are fully interoperable (you can have a client in Golang and a server in JS, or the other way around).
+Yamux-js (Yet another Multiplexer) is a Node.js (TypeScript/JavaScript) port of the multiplexing library for Golang made by HashiCorp: https://github.com/hashicorp/yamux.
+
+### What this fork fixes
+
+The upstream library has two bugs that break interop with Go's `hashicorp/yamux`:
+
+1. **FIN flag mismatch** — `processFlags` checked `FLAGS.SYN` (1) instead of `FLAGS.FIN` (4). Remote stream close was never detected, so streams hung forever waiting for data that would never arrive.
+
+2. **Missing half-close** — `Stream` had no `_final()` method, so calling `stream.end()` never sent a yamux FIN frame. The Go side would block on `Read()` indefinitely, waiting for an EOF that never came.
+
+Install from this fork:
+
+```bash
+npm install github:deniskrainovic/yamux-js
+```
 
 _From https://github.com/hashicorp/yamux:_
 

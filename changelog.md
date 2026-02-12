@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.2.1 (fork)
+
+-   Fix `processFlags` checking `FLAGS.SYN` instead of `FLAGS.FIN` — remote stream close was never detected
+-   Add `_final()` to `Stream` so `stream.end()` sends a FIN frame (half-close support)
+-   Push `null` on FIN and RST so the readable side emits `end`
+-   Include compiled `lib/` in repo for git-based installs
+
 ## 0.2.0
 
 -   Update dependencies (https://github.com/th-ch/yamux-js/pull/18)
