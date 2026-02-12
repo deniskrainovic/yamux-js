@@ -6,11 +6,11 @@ Yamux-js (Yet another Multiplexer) is a Node.js (TypeScript/JavaScript) port of 
 
 ### What this fork fixes
 
-The upstream library has two bugs that break interop with Go's `hashicorp/yamux`:
+The upstream library has two bugs that break interop with `hashicorp/yamux`:
 
 1. **FIN flag mismatch** — `processFlags` checked `FLAGS.SYN` (1) instead of `FLAGS.FIN` (4). Remote stream close was never detected, so streams hung forever waiting for data that would never arrive.
 
-2. **Missing half-close** — `Stream` had no `_final()` method, so calling `stream.end()` never sent a yamux FIN frame. The Go side would block on `Read()` indefinitely, waiting for an EOF that never came.
+2. **Missing half-close** — `Stream` had no `_final()` method, so calling `stream.end()` never sent a yamux FIN frame. The remote side would block indefinitely, waiting for an EOF that never came.
 
 Install from this fork:
 
